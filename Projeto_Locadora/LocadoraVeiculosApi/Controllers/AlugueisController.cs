@@ -162,5 +162,24 @@ namespace LocadoraVeiculosApi.Controllers
                 aluguel.ValorTotal
             });
         }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var aluguel = await _context.Alugueis
+                .Include(a => a.Veiculo)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (aluguel == null)
+                return NotFound(new { mensagem = "Aluguel não encontrado." });
+
+            if (aluguel.Status == StatusAluguel.Aberto && aluguel.Veiculo != null)
+                aluguel.Veiculo.Disponivel = true;
+
+            _context.Alugueis.Remove(aluguel);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }
