@@ -96,10 +96,25 @@ namespace LocadoraVeiculosApi.Controllers
             if (id != veiculo.Id)
                 return BadRequest(new { mensagem = "ID inválido." });
 
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var existente = await _context.Veiculos.FindAsync(id);
 
             if (existente == null)
                 return NotFound(new { mensagem = "Veículo não encontrado." });
+
+            bool placaExiste = await _context.Veiculos
+                .AnyAsync(v => v.Placa == veiculo.Placa && v.Id != id);
+
+            if (placaExiste)
+                return BadRequest(new { mensagem = "Placa já cadastrada para outro veículo." });
+
+            bool fabricanteExiste = await _context.Fabricantes.AnyAsync(f => f.Id == veiculo.FabricanteId);
+            bool categoriaExiste = await _context.CategoriasVeiculo.AnyAsync(c => c.Id == veiculo.CategoriaVeiculoId);
+
+            if (!fabricanteExiste || !categoriaExiste)
+                return BadRequest(new { mensagem = "Fabricante ou categoria inválidos." });
 
             existente.Modelo = veiculo.Modelo;
             existente.AnoFabricacao = veiculo.AnoFabricacao;
