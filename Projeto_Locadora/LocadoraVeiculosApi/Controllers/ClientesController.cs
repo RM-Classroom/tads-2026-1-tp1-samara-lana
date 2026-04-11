@@ -59,10 +59,25 @@ namespace LocadoraVeiculosApi.Controllers
             if (id != cliente.Id)
                 return BadRequest(new { mensagem = "ID inválido." });
 
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var existente = await _context.Clientes.FindAsync(id);
 
             if (existente == null)
                 return NotFound(new { mensagem = "Cliente não encontrado." });
+
+            bool cpfExiste = await _context.Clientes
+                .AnyAsync(c => c.CPF == cliente.CPF && c.Id != id);
+
+            if (cpfExiste)
+                return BadRequest(new { mensagem = "CPF já cadastrado para outro cliente." });
+
+            bool emailExiste = await _context.Clientes
+                .AnyAsync(c => c.Email == cliente.Email && c.Id != id);
+
+            if (emailExiste)
+                return BadRequest(new { mensagem = "E-mail já cadastrado para outro cliente." });
 
             existente.Nome = cliente.Nome;
             existente.CPF = cliente.CPF;
